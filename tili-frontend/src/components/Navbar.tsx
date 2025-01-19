@@ -1,38 +1,39 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { MenuIcon } from "@heroicons/react/outline";
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Brain } from 'lucide-react';
 
-const Navbar: React.FC = () => {
+const Navbar = () => {
   return (
-    <motion.nav
-      className="bg-gradient-to-r from-blue-500 to-purple-500 p-4 text-white shadow-lg"
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="container mx-auto flex justify-between items-center">
-        <motion.h1
-          className="text-2xl font-bold tracking-wide"
-          whileHover={{ scale: 1.1 }}
-        >
-          <Link to="/">Tili AI</Link>
-        </motion.h1>
-        <div className="hidden md:flex gap-6">
-          <Link to="/" className="hover:underline">
-            Home
-          </Link>
-          <Link to="/login" className="hover:underline">
-            Login
-          </Link>
-          <Link to="/signup" className="hover:underline">
-            Sign Up
-          </Link>
+    <nav className="bg-black/50 backdrop-blur-md border-b border-white/10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className="flex items-center"
+          >
+            <Link to="/" className="flex items-center space-x-2">
+              <Brain className="h-8 w-8 text-blue-500" />
+              <span className="text-2xl font-bold text-white">Tili AI</span>
+            </Link>
+          </motion.div>
+          <div className="flex space-x-4">
+            <Link
+              to="/login"
+              className="text-white hover:bg-white/10 px-4 py-2 rounded-md transition-colors"
+            >
+              Login
+            </Link>
+            <Link
+              to="/signup"
+              className="bg-blue-500 text-white hover:bg-blue-600 px-4 py-2 rounded-md transition-colors"
+            >
+              Sign Up
+            </Link>
+          </div>
         </div>
-        <MenuIcon className="md:hidden h-6 w-6 cursor-pointer" />
       </div>
-    </motion.nav>
+    </nav>
   );
-};
+}
 
-export default Navbar;
+export default Navbar

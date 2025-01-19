@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 import os
+from supabase import create_client
 
 load_dotenv()
 
@@ -11,4 +12,7 @@ JWT_ALGO = os.getenv("JWT_ALGO")
 JWT_ACCESS_TOKEN_EXPIRE = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE"))
 JWT_REFRESH_TOKEN_EXPIRE = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRE"))
 JWT_REFRESH_SECRET = os.getenv("JWT_REFRESH_SECRET")
+
+DB = create_client(supabase_url=SUPABASE_URL,supabase_key=SUPABASE_API_KEY)
+
 
