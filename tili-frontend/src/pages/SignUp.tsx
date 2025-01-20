@@ -2,15 +2,39 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Mail, Lock, User } from 'lucide-react';
+import axios from 'axios';
 
 const SignUp = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle signup logic here
+    setError('');
+    setSuccess(false);
+
+    try {
+      const response = await axios.post('http://localhost:8000/signup', {
+        username: name,
+        email,
+        password,
+      });
+
+      setSuccess(true);
+      setName('');
+      setEmail('');
+      setPassword('');
+      alert(response.data.message);
+    } catch (err: any) {
+      if (err.response && err.response.data && err.response.data.detail) {
+        setError(err.response.data.detail);
+      } else {
+        setError('Network error. Please try again later.');
+      }
+    }
   };
 
   return (
@@ -22,6 +46,8 @@ const SignUp = () => {
         className="bg-white/5 backdrop-blur-xl p-8 rounded-xl border border-white/10 w-full max-w-md shadow-xl"
       >
         <h2 className="text-3xl font-bold text-white mb-6 text-center">Create Account</h2>
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+        {success && <p className="text-green-500 text-center mb-4">Account created successfully!</p>}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-white mb-2">Full Name</label>
@@ -82,4 +108,4 @@ const SignUp = () => {
   );
 };
 
-export default SignUp
+export default SignUp;

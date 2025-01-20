@@ -1,6 +1,6 @@
 import jwt 
 from fastapi import HTTPException,Security
-from fastapi.security import HTTPAuthorizationCredentials,HTTPBearer
+from fastapi.security import HTTPBearer
 from passlib.context import CryptContext    
 from datetime import timedelta,datetime,timezone
 from config import JWT_SECRET_KEY,JWT_ACCESS_TOKEN_EXPIRE,JWT_REFRESH_TOKEN_EXPIRE,JWT_ALGO,JWT_REFRESH_SECRET

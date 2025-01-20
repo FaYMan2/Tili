@@ -4,8 +4,26 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
+import { isLoggedInAtom, usernameAtom } from './utils/atom';
+import { useEffect } from 'react';
+import { useAtom } from 'jotai';
+
 
 function App() {
+
+  const [, setIsLoggedIn] = useAtom(isLoggedInAtom);
+  const [, setUsername] = useAtom(usernameAtom);
+
+  useEffect(() => {
+    const storedUsername = localStorage.getItem("username");
+    const accessToken = localStorage.getItem("access_token");
+
+    if (storedUsername && accessToken) {
+      setIsLoggedIn(true);
+      setUsername(storedUsername);
+    }
+  }, [setIsLoggedIn, setUsername]);
+
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-slate-900">

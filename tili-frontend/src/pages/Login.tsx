@@ -1,16 +1,55 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { Mail, Lock } from 'lucide-react';
+import axios from 'axios';
+import { useAtom } from "jotai";
+import { isLoggedInAtom,usernameAtom } from '../utils/atom';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [,setIsloggedIn] = useAtom(isLoggedInAtom)
+  const [,setUsernamAtom] = useAtom(usernameAtom)
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
+    setError('');
+  
+    try {
+      const formData = new FormData();
+      formData.append('username', email);
+      formData.append('password', password);
+  
+      const response = await axios.post('http://localhost:8000/login', formData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+  
+      const { access_token, refresh_token, username } = response.data;
+
+      localStorage.setItem('access_token', access_token);
+      localStorage.setItem('refresh_token', refresh_token);
+      localStorage.setItem('username',username)
+
+      setIsloggedIn(true)
+      setUsernamAtom(username)
+      navigate('/')
+      
+      alert(`Welcome, ${username}`);
+    } catch (err: any) {
+      if (err.response && err.response.data && err.response.data.detail) {
+        setError(err.response.data.detail);
+      } else {
+        setError('Network error. Please try again later.');
+      }
+    }
   };
+  
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4">
@@ -21,6 +60,7 @@ const Login = () => {
         className="bg-white/5 backdrop-blur-xl p-8 rounded-xl border border-white/10 w-full max-w-md shadow-xl"
       >
         <h2 className="text-3xl font-bold text-white mb-6 text-center">Welcome Back</h2>
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-white mb-2">Email</label>
@@ -68,4 +108,4 @@ const Login = () => {
   );
 };
 
-export default Login
+export default Login;

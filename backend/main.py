@@ -22,13 +22,6 @@ app.add_middleware(
 async def main():
     return {"message" : "TILI API"}
 
-fake_users_db = {
-    "user@example.com": {
-        "username": "user@example.com",
-        "password": "$2b$12$yQw.vZjIy8Y9OY1jG4bR4eSiZ2qlQfpLFdZKOyAfXx4WiElGzJHae",  # Hashed password for "password123"
-    }
-}
-    
 class UserInput(BaseModel):
     username: str
     email: str
