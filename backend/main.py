@@ -27,6 +27,11 @@ class UserInput(BaseModel):
     email: str
     password: str
 
+
+class interviewFromData(BaseModel):
+    user_data : str
+    job_description : str
+    
 @app.post("/signup")
 async def signup(user: UserInput):
     try:
@@ -71,8 +76,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     if not auth.verifyPwd(form_data.password, user_data["hashed_pwd"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    access_token = auth.createAccessToken({"sub": user_data["Email"]})
-    refresh_token = auth.createRefreshToken({"sub": user_data["Email"]})
+    access_token = auth.createAccessToken({"sub": f'{user_data["Email"]}+{user_data['username']}'})
+    refresh_token = auth.createRefreshToken({"sub": f'{user_data["Email"]}+{user_data['username']}'})
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -90,3 +95,65 @@ async def refresh_token(refresh_token: str):
 async def protected_route(token: str = Depends(oauth2_scheme)):
     payload = auth.decodeToken(token)
     return {"message": f"Hello {payload['sub']}"}
+
+
+@app.get("/interviews/{username}")
+async def get_interviews(username: str, token: str = Depends(oauth2_scheme)):
+    payload = auth.decodeToken(token)
+    if payload['sub'].split('+')[1] != username:
+        raise HTTPException(status_code=403, detail=f"Access denied {payload['sub']} and {username}")
+    try:
+        interviews = DB.table("Interview").select("*").eq("creator", username).execute()
+        if not interviews.data:
+            raise HTTPException(status_code=404, detail="No interviews found for this user.")
+
+        return {
+            "username": username,
+            "interviews": interviews.data
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    
+    
+@app.post("/createInterview/{username}")
+async def createInterview(
+    username: str,
+    interviewData: interviewFromData,
+    token: str = Depends(oauth2_scheme)
+):
+    try:
+        payload = auth.decodeToken(token)
+        _, payloadUsername = payload['sub'].split('+')
+
+        if payloadUsername != username:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        data = {
+            "user_data": interviewData.user_data,
+            "job_description": interviewData.job_description,
+            "creator": username,  
+        }
+
+        response = DB.table('Interview').insert(data).execute()
+
+        if hasattr(response, 'data') and response.data:
+            return {
+                "message": "Interview created successfully",
+                "interview_id": response.data[0].get('id'),
+            }
+        else:
+            raise Exception("Unexpected database response format.")
+
+    except Exception as e:
+        if "foreign key constraint" in str(e).lower():
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid creator username. Ensure the creator exists in the related table."
+            )
+            
+        raise HTTPException(    
+                status_code=500,
+                detail=f"An error occurred: {str(e)}"
+        )
+    
+    
