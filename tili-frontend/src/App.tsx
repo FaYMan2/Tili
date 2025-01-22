@@ -9,8 +9,9 @@ import { useEffect } from 'react';
 import { useAtom } from 'jotai';
 
 
-function App() {
+import Dashboard from './pages/Dashboard';
 
+function App() {
   const [, setIsLoggedIn] = useAtom(isLoggedInAtom);
   const [, setUsername] = useAtom(usernameAtom);
 
@@ -32,6 +33,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
       </div>
     </BrowserRouter>

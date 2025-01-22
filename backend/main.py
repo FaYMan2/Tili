@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from auth import AuthHandler
 from config import DB
-from pydantic import BaseModel
+from models import UserInput,interviewFromData
 
 app = FastAPI()
 auth = AuthHandler()
@@ -22,15 +22,7 @@ app.add_middleware(
 async def main():
     return {"message" : "TILI API"}
 
-class UserInput(BaseModel):
-    username: str
-    email: str
-    password: str
 
-
-class interviewFromData(BaseModel):
-    user_data : str
-    job_description : str
     
 @app.post("/signup")
 async def signup(user: UserInput):

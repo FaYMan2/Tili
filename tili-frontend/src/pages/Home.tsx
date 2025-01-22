@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Brain, MessageSquare, LineChart } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { isLoggedInAtom } from '../utils/atom';
 
 const Home = () => {
   const containerVariants = {
@@ -37,7 +38,7 @@ const Home = () => {
           whileTap={{ scale: 0.95 }}
         >
           <Link
-            to="/signup"
+            to={!isLoggedInAtom ? "/signup" : "/dashboard"}
             className="bg-blue-500 text-white px-8 py-3 rounded-lg font-semibold text-lg hover:bg-blue-600 transition-colors inline-block shadow-lg shadow-blue-500/20"
           >
             Get Started

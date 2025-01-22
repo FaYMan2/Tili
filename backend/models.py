@@ -1,0 +1,12 @@
+from pydantic import BaseModel
+
+class UserInput(BaseModel):
+    username: str
+    email: str
+    password: str
+
+
+class interviewFromData(BaseModel):
+    user_data : str
+    job_description : str
+    job_name : str
