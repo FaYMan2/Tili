@@ -26,5 +26,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "src/pa, "pages"ges", "src/pages"]
+  "include": ["src", "src/pages","src/pages"]
 }
+  

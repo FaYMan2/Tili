@@ -2,7 +2,6 @@ fastapi[standard]
 python-dotenv
 langchain_together
 langchain
-langchain-pinecone
 supabase
 pyjwt
 passlib

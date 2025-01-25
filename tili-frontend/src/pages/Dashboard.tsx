@@ -4,7 +4,7 @@ import { useAtom } from "jotai";
 import { useNavigate } from "react-router-dom";
 import { usernameAtom, isLoggedInAtom, interviewsData } from "../utils/atom";
 import CreateInterviewSheet from "@/components/CreateInterviewSheet";
-
+import { Toaster, toast } from "sonner";  
 interface Interview {
   id: number;
   created_at: string;
@@ -63,16 +63,41 @@ const Dashboard: React.FC = () => {
     fetchInterviews();
   }, [username, navigate, setIsLoggedIn, setUsername]);
 
-  const handleCreateInterview = async (jobName: string, resume: File | null, jobDescription: string) => {
+  const handleCreateInterview = async (jobName: string, resume: string | null, jobDescription: string) => {
     const token = localStorage.getItem("access_token");
     if (!token) return;
+    console.log(jobDescription)
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/createInterview/${username}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_data: resume || "", // Pass resume or empty string
+          job_description: jobDescription,
+          job_name: jobName,
+        }),
+      });
 
-    const formData = new FormData();
-    formData.append("job_name", jobName);
-    if (resume) formData.append("resume", resume);
-    formData.append("job_description", jobDescription);
-    console.log(formData)
-
+      if (response.ok) {
+        const data = await response.json();
+        toast.success("Interview created successfully!", {
+          description: `Interview ID: ${data.interview_id}`,
+        });
+        // Optionally, refresh the interviews list
+      } else {
+        const errorData = await response.json();
+        toast.error("Failed to create interview", {
+          description: errorData.detail || "An error occurred.",
+        });
+      }
+    } catch (err) {
+      toast.error("An error occurred", {
+        description: "Failed to connect to the server.",
+      });
+    }
   };
 
   return (
@@ -85,6 +110,7 @@ const Dashboard: React.FC = () => {
       }}
       className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
     >
+      <Toaster position="top-right" richColors /> {/* Add Toaster component */}
       <div className="flex justify-between items-center mb-10">
         <h1 className="text-5xl font-bold text-white">Dashboard</h1>
         <CreateInterviewSheet onCreate={handleCreateInterview} />

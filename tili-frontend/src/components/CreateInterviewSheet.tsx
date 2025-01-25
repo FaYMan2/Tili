@@ -3,11 +3,11 @@ import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/co
 import { Button } from "@/components/ui/button";
 import * as pdfjs from "pdfjs-dist";
 
-// Set worker source from the public folder
-pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.mjs";
+//pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.mjs";
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs`;
 
 interface CreateInterviewSheetProps {
-  onCreate: (jobName: string, resume: File | null, jobDescriptionFile: File | null, jobDescriptionText: string) => void;
+  onCreate: (jobName: string, resume: string | null, jobDescriptionText: string) => void;
 }
 
 const CreateInterviewSheet: React.FC<CreateInterviewSheetProps> = ({ onCreate }) => {
@@ -55,8 +55,8 @@ const CreateInterviewSheet: React.FC<CreateInterviewSheetProps> = ({ onCreate })
     console.log("Resume Text:", resumeText);
     console.log("Job Description File Text:", jobDescriptionFileText);
     console.log("Job Description Text Area:", jobDescriptionText);
-
-    onCreate(jobName, resume, jobDescriptionFile, jobDescriptionText);
+    const jobDescription = jobDescriptionText ? jobDescriptionText : jobDescriptionFileText;
+    onCreate(jobName, resumeText, jobDescription);
     setJobName("");
     setResume(null);
     setJobDescriptionFile(null);

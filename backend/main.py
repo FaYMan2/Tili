@@ -124,8 +124,9 @@ async def createInterview(
             "user_data": interviewData.user_data,
             "job_description": interviewData.job_description,
             "creator": username,  
+            "job_name" : interviewData.job_name
         }
-
+        print(data)
         response = DB.table('Interview').insert(data).execute()
 
         if hasattr(response, 'data') and response.data:
