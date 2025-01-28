@@ -3,7 +3,8 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from auth import AuthHandler
 from config import DB
-from models import UserInput,interviewFromData
+from models import UserInput,interviewFromData,Questions
+from together import createQuestions
 
 app = FastAPI()
 auth = AuthHandler()
@@ -120,13 +121,20 @@ async def createInterview(
         if payloadUsername != username:
             raise HTTPException(status_code=403, detail="Access denied")
 
+        questions: Questions = await createQuestions(
+            resumeText=interviewData.user_data,
+            JobDescription=interviewData.job_description
+        )
+
         data = {
             "user_data": interviewData.user_data,
             "job_description": interviewData.job_description,
-            "creator": username,  
-            "job_name" : interviewData.job_name
+            "creator": username,
+            "job_name": interviewData.job_name,
+            "questions": questions.model_dump()  
         }
-        print(data)
+        print(f"Inserting Data: {data}")
+
         response = DB.table('Interview').insert(data).execute()
 
         if hasattr(response, 'data') and response.data:
@@ -143,10 +151,53 @@ async def createInterview(
                 status_code=400,
                 detail="Invalid creator username. Ensure the creator exists in the related table."
             )
-            
-        raise HTTPException(    
-                status_code=500,
-                detail=f"An error occurred: {str(e)}"
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred: {str(e)}"
         )
-    
-    
+
+
+@app.get('/interviews/question/{id}/{questionNumber}')
+async def startInterview(
+    id: str,
+    questionNumber: int,
+    token: str = Depends(oauth2_scheme)
+):
+    try:
+        questionNumber -= 1
+        payload = auth.decodeToken(token)
+        _, username = payload['sub'].split('+')
+
+        if not (0 <= questionNumber <= 4):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid question number. Must be between 0 and 4."
+            )
+
+        interview = DB.table('Interview').select('questions').eq('id',id).execute()
+
+        if not interview:
+            raise HTTPException(status_code=404, detail="Interview not found")
+
+        questions = interview.data[0]['questions']['questions']
+        if questionNumber >= len(questions):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Question number {questionNumber} is out of range for this interview."
+            )
+
+        question = questions[questionNumber]
+        return {
+            "questionNumber": questionNumber,
+            "question": question,
+        }
+
+    except HTTPException as e:
+        raise e
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred: {str(e)}"
+        )

@@ -2,10 +2,10 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAtom } from "jotai";
 import { useNavigate } from "react-router-dom";
-import { usernameAtom, isLoggedInAtom, interviewsData } from "../utils/atom";
+import { usernameAtom, isLoggedInAtom } from "../utils/atom";
 import CreateInterviewSheet from "@/components/CreateInterviewSheet";
 import { Toaster, toast } from "sonner";  
-interface Interview {
+interface InterviewCard {
   id: number;
   created_at: string;
   job_name: string;
@@ -14,9 +14,8 @@ interface Interview {
 
 const Dashboard: React.FC = () => {
   const [username] = useAtom(usernameAtom);
-  const [interviews, setInterviews] = useState<Interview[] | null>(null);
+  const [interviews, setInterviews] = useState<InterviewCard[] | null>(null);
   const [, setError] = useState<string | null>(null);
-  const [, setInterviewsData] = useAtom(interviewsData);
   const [, setIsLoggedIn] = useAtom(isLoggedInAtom);
   const [, setUsername] = useAtom(usernameAtom);
   const navigate = useNavigate();
@@ -41,8 +40,8 @@ const Dashboard: React.FC = () => {
 
         if (response.ok) {
           const data = await response.json();
+          console.log(data)
           setInterviews(data.interviews);
-          setInterviewsData(data.interviews);
         } else {
           const errorData = await response.json();
           setError(errorData.detail || "Failed to fetch interviews.");
