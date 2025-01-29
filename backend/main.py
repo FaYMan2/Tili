@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from auth import AuthHandler
 from config import DB
-from models import UserInput,interviewFromData,Questions
+from models import UserInput,interviewFromData,Questions,Answer
 from together import createQuestions
 
 app = FastAPI()
@@ -158,39 +158,100 @@ async def createInterview(
         )
 
 
-@app.get('/interviews/question/{id}/{questionNumber}')
+@app.get('/interviews/question/{id}')
 async def startInterview(
     id: str,
-    questionNumber: int,
     token: str = Depends(oauth2_scheme)
 ):
     try:
-        questionNumber -= 1
         payload = auth.decodeToken(token)
         _, username = payload['sub'].split('+')
 
-        if not (0 <= questionNumber <= 4):
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid question number. Must be between 0 and 4."
-            )
+        interview = DB.table('Interview').select('questions', 'answers').eq('id', id).execute()
 
-        interview = DB.table('Interview').select('questions').eq('id',id).execute()
-
-        if not interview:
+        if not interview or not interview.data:
             raise HTTPException(status_code=404, detail="Interview not found")
 
-        questions = interview.data[0]['questions']['questions']
-        if questionNumber >= len(questions):
+        interview_data = interview.data[0]
+
+        questions = interview_data.get('questions', {}).get('questions', [])
+        answers = interview_data.get('answers', [])
+
+        if not isinstance(questions, list):
             raise HTTPException(
-                status_code=400,
-                detail=f"Question number {questionNumber} is out of range for this interview."
+                status_code=500, 
+                detail="Invalid questions structure in the database."
             )
 
+        if not isinstance(answers, list) and answers is not None:
+            return {
+                "error" : answers
+            }
+        if answers is None:
+            return {
+                "questionNumber" : 1,
+                "question" : questions[0]
+            }
+        
+        if len(answers) >= len(questions):
+            return {
+                "detail": "All questions have been answered.",
+                "totalQuestions": len(questions),
+                "answeredQuestions": len(answers)
+            }
+
+        questionNumber = len(answers)
         question = questions[questionNumber]
+
         return {
-            "questionNumber": questionNumber,
+            "questionNumber": questionNumber + 1, 
             "question": question,
+        }
+
+    except HTTPException as e:
+        raise e
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred: {str(e)}"
+        )
+        
+        
+
+@app.post('/interviews/answer/{id}')
+async def addAnswer(
+    id: str,
+    answerData: Answer,
+    token: str = Depends(oauth2_scheme)
+):
+    try:
+        payload = auth.decodeToken(token)
+        _, username = payload['sub'].split('+')
+
+        interview = DB.table('Interview').select('answers').eq('id', id).execute()
+
+        if not interview or not interview.data:
+            raise HTTPException(status_code=404, detail="Interview not found")
+
+        interview_data = interview.data[0]
+        answers = interview_data.get('answers', None)
+
+        if answers is None:
+            answers = []
+
+        if (len(answers) + 1)  != answerData.answerNum:
+            raise HTTPException(
+                status_code=401,
+                detail=f"Unauthorized answer : number of ans : {len(answers)} adding answer {answerData.answerNum}"
+            )
+
+        answers.append(answerData.answerData)
+        update_result = DB.table('Interview').update({'answers': answers}).eq('id', id).execute()
+
+        return {
+            "detail": "Answer added successfully.",
+            "updatedAnswers": answers
         }
 
     except HTTPException as e:

@@ -14,6 +14,10 @@ class interviewFromData(BaseModel):
     
 class Questions(BaseModel):
     questions : List[str]
+
+class Answer(BaseModel):
+    answerData : str
+    answerNum : int
     
     
     

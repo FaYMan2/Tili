@@ -120,7 +120,8 @@ const Dashboard: React.FC = () => {
           <motion.div
             key={interview.id}
             whileHover={{ y: -5 }}
-            className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-white/10 shadow-lg"
+            className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-white/10 shadow-lg hover:cursor-pointer"
+            onClick={() => {navigate(`/interview/${interview.id}`)}}
           >
             <h3 className="text-xl font-semibold text-white mb-2">{interview.job_name}</h3>
             <p className="text-gray-300 mb-2">
@@ -132,15 +133,15 @@ const Dashboard: React.FC = () => {
                 interview.result === 1
                   ? "text-green-500"
                   : interview.result === 2
-                  ? "text-red-500"
+                  ? "text-yellow-400"
                   : "text-yellow-400"
               }`}
             >
-              <strong>Result:</strong>{" "}
+              <strong>Status:</strong>{" "}
               {interview.result === 1
-                ? "Passed"
+                ? "Completed"
                 : interview.result === 2
-                ? "Failed"
+                ? "Pending"
                 : "Pending"}
             </p>
           </motion.div>
