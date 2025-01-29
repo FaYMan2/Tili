@@ -126,12 +126,14 @@ async def createInterview(
             JobDescription=interviewData.job_description
         )
 
+        questionData = {"data" : [{"question" : q, "answer" : ""} for q in questions.questions] }
+        
         data = {
             "user_data": interviewData.user_data,
             "job_description": interviewData.job_description,
             "creator": username,
             "job_name": interviewData.job_name,
-            "questions": questions.model_dump()  
+            "questions": questionData
         }
         print(f"Inserting Data: {data}")
 
@@ -158,107 +160,100 @@ async def createInterview(
         )
 
 
-@app.get('/interviews/question/{id}')
+@app.get('/interviews/question/{username}/{id}')
 async def startInterview(
+    username: str,
     id: str,
     token: str = Depends(oauth2_scheme)
 ):
     try:
         payload = auth.decodeToken(token)
-        _, username = payload['sub'].split('+')
+        _, payloadUsername = payload['sub'].split('+')
 
-        interview = DB.table('Interview').select('questions', 'answers').eq('id', id).execute()
+        if payloadUsername != username:
+            raise HTTPException(status_code=403, detail="Access denied")
 
-        if not interview or not interview.data:
+        data = DB.table('Interview').select('creator', 'questions').eq('id', id).execute()
+
+        if not data.data:
             raise HTTPException(status_code=404, detail="Interview not found")
 
-        interview_data = interview.data[0]
+        interview = data.data[0]
+        creator = interview.get('creator')
+        questionData = interview.get('questions')
 
-        questions = interview_data.get('questions', {}).get('questions', [])
-        answers = interview_data.get('answers', [])
+        if creator != username:
+            raise HTTPException(status_code=403, detail="Access denied")
 
-        if not isinstance(questions, list):
-            raise HTTPException(
-                status_code=500, 
-                detail="Invalid questions structure in the database."
-            )
+        questionsArr = questionData.get('data', []) if questionData else []
 
-        if not isinstance(answers, list) and answers is not None:
-            return {
-                "error" : answers
-            }
-        if answers is None:
-            return {
-                "questionNumber" : 1,
-                "question" : questions[0]
-            }
-        
-        if len(answers) >= len(questions):
-            return {
-                "detail": "All questions have been answered.",
-                "totalQuestions": len(questions),
-                "answeredQuestions": len(answers)
-            }
+        if not questionsArr:
+            raise HTTPException(status_code=404, detail="No questions available")
 
-        questionNumber = len(answers)
-        question = questions[questionNumber]
+        for qIdx, ques in enumerate(questionsArr):
+            if ques.get('answer') is None:
+                return {
+                    "question": ques.get('question'),
+                    "question_index": qIdx + 1
+                }
 
-        return {
-            "questionNumber": questionNumber + 1, 
-            "question": question,
-        }
+        return {"message": "All questions have been answered"}
 
-    except HTTPException as e:
-        raise e
-
+    except HTTPException as he:
+        raise he
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"An error occurred: {str(e)}"
-        )
-        
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
         
 
-@app.post('/interviews/answer/{id}')
+@app.post('/interviews/answer/{username}/{id}')
 async def addAnswer(
+    username: str,
     id: str,
-    answerData: Answer,
+    answer_data: Answer,
     token: str = Depends(oauth2_scheme)
 ):
     try:
         payload = auth.decodeToken(token)
-        _, username = payload['sub'].split('+')
-
-        interview = DB.table('Interview').select('answers').eq('id', id).execute()
-
-        if not interview or not interview.data:
+        _, payloadUsername = payload['sub'].split('+')
+        if payloadUsername != username:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        interview_response = DB.table('Interview').select('creator,questions').eq('id', id).execute()
+        if not interview_response.data:
             raise HTTPException(status_code=404, detail="Interview not found")
 
-        interview_data = interview.data[0]
-        answers = interview_data.get('answers', None)
+        interview = interview_response.data[0]
+        creator = interview.get('creator')
 
-        if answers is None:
-            answers = []
+        if creator != username:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        questions_data = interview.get('questions', {})
+        questions_arr = questions_data.get('data', [])
 
-        if (len(answers) + 1)  != answerData.answerNum:
-            raise HTTPException(
-                status_code=401,
-                detail=f"Unauthorized answer : number of ans : {len(answers)} adding answer {answerData.answerNum}"
-            )
+        if answer_data.answerNum >= len(questions_arr) or answer_data.answerNum < 0:
+            raise HTTPException(status_code=400, detail="Invalid question index")
 
-        answers.append(answerData.answerData)
-        update_result = DB.table('Interview').update({'answers': answers}).eq('id', id).execute()
+        question_entry = questions_arr[answer_data.answerNum]
+        
+        if question_entry.get('answer') is not None:
+            raise HTTPException(status_code=400, detail="Question already answered")
+        
+        if question_entry.get('question') != answer_data.question:
+            raise HTTPException(status_code=400, detail="Question text mismatch")
+        
+        question_entry['answer'] = answer_data.answerData
+        questions_data['data'] = questions_arr
 
-        return {
-            "detail": "Answer added successfully.",
-            "updatedAnswers": answers
-        }
+        update_response = DB.table('Interview').update({'questions': questions_data}).eq('id', id).execute()
+        
+        if not update_response.data:
+            raise HTTPException(status_code=500, detail="Failed to update answer")
 
-    except HTTPException as e:
-        raise e
+        return {"message": "Answer submitted successfully"}
 
+    except HTTPException as he:
+        raise he
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"An error occurred: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        

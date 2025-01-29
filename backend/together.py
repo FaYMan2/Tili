@@ -1,7 +1,7 @@
 from config import TOGETHER_API_KEY
 from langchain_together import ChatTogether
 import os
-from prompts import QUESTION_PROMPT
+from prompts import QUESTION_PROMPT,RESPONSE_PROMPT
 from models import Questions
 
 
@@ -26,10 +26,30 @@ async def createQuestions(resumeText : str, JobDescription : str) -> Questions:
     questions : Questions = await structuredLLM.ainvoke(questionPrompt)
     return questions
 
+
+async def createResponse(question : str, answer : str):
+    try:
+        response_prompt = RESPONSE_PROMPT.format(
+            question = question,
+            answer = answer
+        )
+        async for chunk in llm.astream(response_prompt):
+                yield chunk.content
+                
+    except Exception as e:
+        yield f"An error occurred while generating the response: {str(e)}"
+
+
+
+async def main():
+    question = "Can you explain the difference between a process and a thread?"
+    answer = "A process is an independent execution unit, whereas a thread is a lightweight subunit of a process."
+    
+    print("Streaming response:\n")
+    async for chunk in createResponse(question, answer):
+        print(chunk, end="", flush=True)
 if __name__ == "__main__":
-    print("executing ... ")
-    print(f"LLM: {llm}")
-    questions = createQuestions(resumeText='Suvarna vats, PYTHON DEVELOPER with proffeciency in AI tools and langchain'
-                                ,JobDescription='AI engineer - 1 \n\n should be outstanding in python , langchain and FastAPI')
+    import asyncio
+    asyncio.run(main())
     
     

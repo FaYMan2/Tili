@@ -18,6 +18,8 @@ class Questions(BaseModel):
 class Answer(BaseModel):
     answerData : str
     answerNum : int
+    question : str
+    
     
     
     
