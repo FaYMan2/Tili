@@ -20,6 +20,9 @@ class Answer(BaseModel):
     answerNum : int
     question : str
     
+    class Config:
+      alias_generator = lambda x: x  
+      allow_population_by_field_name = True
     
     
     

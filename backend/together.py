@@ -4,7 +4,6 @@ import os
 from prompts import QUESTION_PROMPT,RESPONSE_PROMPT
 from models import Questions
 
-
 if "TOGETHER_API_KEY" not in os.environ:    
     os.environ['TOGETHER_API_KEY'] = TOGETHER_API_KEY
 
@@ -40,7 +39,6 @@ async def createResponse(question : str, answer : str):
         yield f"An error occurred while generating the response: {str(e)}"
 
 
-
 async def main():
     question = "Can you explain the difference between a process and a thread?"
     answer = "A process is an independent execution unit, whereas a thread is a lightweight subunit of a process."
@@ -48,6 +46,9 @@ async def main():
     print("Streaming response:\n")
     async for chunk in createResponse(question, answer):
         print(chunk, end="", flush=True)
+
+
+        
 if __name__ == "__main__":
     import asyncio
     asyncio.run(main())

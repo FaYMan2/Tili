@@ -4,7 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from auth import AuthHandler
 from config import DB
 from models import UserInput,interviewFromData,Questions,Answer
-from together import createQuestions
+from together import createQuestions,createResponse
+from fastapi.responses import StreamingResponse
+from fastapi import logger
 
 app = FastAPI()
 auth = AuthHandler()
@@ -145,7 +147,7 @@ async def createInterview(
                 "interview_id": response.data[0].get('id'),
             }
         else:
-            raise Exception("Unexpected database response format.")
+            raise Exception("Unexpected database     response format.")
 
     except Exception as e:
         if "foreign key constraint" in str(e).lower():
@@ -249,11 +251,16 @@ async def addAnswer(
         
         if not update_response.data:
             raise HTTPException(status_code=500, detail="Failed to update answer")
-
-        return {"message": "Answer submitted successfully"}
+        
+        
+        return StreamingResponse(
+            content=createResponse(answer=answer_data.answerData,
+                                    question=answer_data.question
+                                ))
 
     except HTTPException as he:
         raise he
     except Exception as e:
+        logger.logger.error(f"Error processing answer: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
         
