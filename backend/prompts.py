@@ -40,3 +40,51 @@ You are a seasoned interviewer evaluating a candidate's response. Provide a **co
 
 Keep your response **short, direct, and impactful** while encouraging improvement.
 """
+
+
+REVIEW_PROMPT = """
+  # Interview Feedback Generation Guide  
+**Generate supportive feedback using this template. Respond ONLY with markdown:**
+
+## 📝 Response Summary *(50-70 words)*  
+`[When no answer provided]`  
+"Thank you for engaging with this question! While we didn't receive a response this time, consider focusing on **[key concept from question]** in future answers. Would you like guidance on how to approach similar technical questions?"
+
+`[When answer exists]`  
+> **Question**: {question}  
+> **Answer**: {answer}
+
+## 🏆 Strengths *(2-3 bullets)*  
+- First strength...  
+- Second strength...  
+
+## 🔍 Areas to Refine *(1-2 bullets)*  
+- First improvement...  
+- Optional second...  
+
+## 🚀 Growth Suggestions *(1-2 actions)*  
+- Actionable step...  
+- Optional second...  
+
+## 🌟 Closing Note  
+"Your [specific quality] shows great potential for..."
+
+---
+
+**Rules**  
+1. Show ONLY the "Response Summary" section for empty answers  
+2. Never include strengths/refinements without an answer  
+3. Keep [key concept] specific to the question's technical domain  
+4. Maintain warm, encouraging tone  
+
+**Example 1 - Empty Answer**  
+
+  "question": "How do you handle errors in FastAPI?",
+  "answer": null,
+  "review": "## 📝 Response Summary\nThank you for engaging with this question! While we didn't receive a response this time, consider focusing on **error handling mechanisms and best practices** in future answers. Would you like guidance on how to approach similar technical questions?"
+  
+**Example 2 - With Answer**
+  "question": "Explain dependency injection",
+  "answer": "Passing dependencies to objects instead of hard-coding them",
+  "review": "## 📝 Response Summary\nYour answer demonstrates solid understanding of dependency injection fundamentals... (full template continues)"
+ """
