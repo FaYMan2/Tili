@@ -5,6 +5,9 @@ import { motion } from "framer-motion";
 import { usernameAtom } from "@/utils/atom";
 import { CircularProgressbar } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import clsx from "clsx";
 
 interface Question {
   questionNumber: number;
@@ -50,6 +53,11 @@ const Interview: React.FC = () => {
 
       if (!response.ok) throw new Error("Failed to fetch question");
       const data = await response.json();
+      
+      if (data.message === "All questions have been answered") {
+        navigate(`/results/${interviewId}`);
+        return;
+      }
 
       if (data.detail) {
         setError(data.detail);
@@ -316,26 +324,39 @@ const Interview: React.FC = () => {
                 </div>
 
                 {streamedText && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="mt-6 p-4 bg-white/5 rounded-xl border border-white/10"
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-6 p-4 bg-white/5 rounded-xl border border-white/10"
+              >
+                <h3 className="text-lg font-semibold text-blue-400 mb-2">Analysis:</h3>
+                <div className="text-gray-300 whitespace-pre-wrap">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      code({node, inline, className, children, ...props}) {
+                        return (
+                          <code className={clsx(className, "bg-white/10 px-1 rounded")} {...props}>
+                            {children}
+                          </code>
+                        )
+                      }
+                    }}
                   >
-                    <h3 className="text-lg font-semibold text-blue-400 mb-2">Analysis:</h3>
-                    <div className="text-gray-300 whitespace-pre-wrap">
-                      {streamedText}
-                      {isStreaming && (
-                        <motion.span
-                          animate={{ opacity: [0, 1, 0] }}
-                          transition={{ repeat: Infinity, duration: 1.5 }}
-                          className="ml-2"
-                        >
-                          ▌
-                        </motion.span>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
+                    {streamedText}
+                  </ReactMarkdown>
+                  {isStreaming && (
+                    <motion.span
+                      animate={{ opacity: [0, 1, 0] }}
+                      transition={{ repeat: Infinity, duration: 1.5 }}
+                      className="ml-2"
+                    >
+                      ▌
+                    </motion.span>
+                  )}
+                </div>
+              </motion.div>
+)}
               </div>
             </div>
           ) : (

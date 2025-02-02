@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
+import ResultsPage from './pages/Results'
 import { isLoggedInAtom, usernameAtom } from './utils/atom';
 import { useEffect } from 'react';
 import { useAtom } from 'jotai';
@@ -35,6 +36,7 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/interview/:interviewId" element={<Interview/>} />
+          <Route path="/results/:id" element={<ResultsPage/>} />
         </Routes>
       </div>
     </BrowserRouter>

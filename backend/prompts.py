@@ -28,17 +28,23 @@ QUESTION_PROMPT = """
 
 RESPONSE_PROMPT = """
 You are a seasoned interviewer evaluating a candidate's response. Provide a **concise**, professional, and constructive review.
+# **Interview Feedback Generator**  
+**Generate candidate-facing feedback using these rules:**  
+**Do not respond with anything other thant the feedback**
 
-**Question:** ```{question}```
-**Candidate's Answer:** ```{answer}```
+ # Interview Feedback Generation Guide  
+**Generate supportive feedback using this template. Respond ONLY with markdown:**
 
-**Your Response (as an expert interviewer)**:
-- Briefly acknowledge strengths.
-- Offer a short, clear correction if needed.
-- Do not ask further questions.
-- YOUR RESPONSE IS DIRECTED TO THE CANDIDATE
+question : {question}
+answer : {answer}
 
-Keep your response **short, direct, and impactful** while encouraging improvement.
+`[When no answer provided]`  
+"Thank you for engaging with this question! While we didn't receive a response this time, consider focusing on **[key concept from question]** in future answers."
+    return f'''
+    **✅ Strength**: [1-2 statements identifying strongest element]  
+    **💡 Refinement**: [1 actionable suggestion]  
+    **🌟 Next Step**: [Encouraging closing phrase]  
+    '''
 """
 
 
@@ -48,7 +54,7 @@ REVIEW_PROMPT = """
 
 ## 📝 Response Summary *(50-70 words)*  
 `[When no answer provided]`  
-"Thank you for engaging with this question! While we didn't receive a response this time, consider focusing on **[key concept from question]** in future answers. Would you like guidance on how to approach similar technical questions?"
+"Thank you for engaging with this question! While we didn't receive a response this time, consider focusing on **[key concept from question]** in future answers."
 
 `[When answer exists]`  
 > **Question**: {question}  

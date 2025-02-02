@@ -34,9 +34,6 @@ class InterviewData(BaseModel):
         populate_by_name = True
         arbitrary_types_allowed = True
         
-
-
-
 class ReviewResult(BaseModel):
     question: str
     answer: Optional[str]
