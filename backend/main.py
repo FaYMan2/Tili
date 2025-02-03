@@ -7,7 +7,6 @@ from models import UserInput,interviewFromData,Questions,Answer,InterviewData,in
 from together import createQuestions,createResponse,createReviews
 from fastapi.responses import StreamingResponse
 from fastapi import logger
-from typing import List
 
 app = FastAPI()
 auth = AuthHandler()
@@ -129,7 +128,7 @@ async def createInterview(
             JobDescription=interviewData.job_description
         )
 
-        questionData = {"data" : [{"question" : q, "answer" : ""} for q in questions.questions] }
+        questionData = {"data" : [{"question" : q, "answer" : None} for q in questions.questions] }
         
         data = {
             "user_data": interviewData.user_data,

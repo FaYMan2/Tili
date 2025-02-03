@@ -1,151 +1,206 @@
 import React, { useState } from "react";
-import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { UploadCloud, X, FileText } from "lucide-react";
 import * as pdfjs from "pdfjs-dist";
+import { motion } from "framer-motion";
+import { toast } from "react-hot-toast";
 
-//pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.mjs";
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs`;
 
-interface CreateInterviewSheetProps {
-  onCreate: (jobName: string, resume: string | null, jobDescriptionText: string) => void;
+interface CreateInterviewDialogProps {
+  onCreate: (jobName: string, resume: string | null, jobDescriptionText: string) => Promise<void>;
 }
 
-const CreateInterviewSheet: React.FC<CreateInterviewSheetProps> = ({ onCreate }) => {
+const CreateInterviewDialog: React.FC<CreateInterviewDialogProps> = ({ onCreate }) => {
+  const [open, setOpen] = useState(false);
   const [jobName, setJobName] = useState("");
   const [resume, setResume] = useState<File | null>(null);
   const [jobDescriptionFile, setJobDescriptionFile] = useState<File | null>(null);
   const [jobDescriptionText, setJobDescriptionText] = useState("");
-  const [showJobDescriptionForm, setShowJobDescriptionForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const readPDF = async (file: File): Promise<string> => {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-    const textArray: string[] = [];
-
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
+    const pages = Array.from({ length: pdf.numPages }, async (_, i) => {
+      const page = await pdf.getPage(i + 1);
       const content = await page.getTextContent();
-      const pageText = content.items.map((item: any) => item.str).join(" ");
-      textArray.push(pageText);
-    }
-
-    return textArray.join("\n");
+      return content.items.map((item: any) => item.str).join(" ");
+    });
+    return (await Promise.all(pages)).join("\n");
   };
 
   const handleCreate = async () => {
-    let resumeText = "";
-    let jobDescriptionFileText = "";
-
-    if (resume && resume.type === "application/pdf") {
-      try {
-        resumeText = await readPDF(resume);
-      } catch (error) {
-        console.error("Error reading resume PDF:", error);
-      }
+    if (!jobName || !resume) {
+      toast.error("Please fill in all required fields.");
+      return;
     }
 
-    if (jobDescriptionFile && jobDescriptionFile.type === "application/pdf") {
-      try {
-        jobDescriptionFileText = await readPDF(jobDescriptionFile);
-      } catch (error) {
-        console.error("Error reading job description PDF:", error);
-      }
-    }
+    setIsLoading(true);
 
-    console.log("Resume Text:", resumeText);
-    console.log("Job Description File Text:", jobDescriptionFileText);
-    console.log("Job Description Text Area:", jobDescriptionText);
-    const jobDescription = jobDescriptionText ? jobDescriptionText : jobDescriptionFileText;
-    onCreate(jobName, resumeText, jobDescription);
+    try {
+      const [resumeText, jdText] = await Promise.all([
+        readPDF(resume),
+        jobDescriptionFile ? readPDF(jobDescriptionFile) : "",
+      ]);
+
+      await onCreate(jobName, resumeText, jobDescriptionText || jdText);
+      setOpen(false);
+      resetForm();
+      toast.success("Interview created successfully!");
+    } catch (error) {
+      console.error("Error creating interview:", error);
+      toast.error("Failed to create interview. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetForm = () => {
     setJobName("");
     setResume(null);
     setJobDescriptionFile(null);
     setJobDescriptionText("");
-    setShowJobDescriptionForm(false);
   };
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-          Create New Interview
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" className="border-gray-700 bg-white/5 text-white p-6">
-        <SheetHeader>
-          <SheetTitle className="text-lg font-bold text-white">Create New Interview</SheetTitle>
-        </SheetHeader>
-        <div className="mt-4 space-y-6">
-          {/* Job Name Input */}
-          <input
-            className="w-full px-4 py-2 bg-white/10 text-white rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Job Name"
-            value={jobName}
-            onChange={(e) => setJobName(e.target.value)}
-          />
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Button
+            size="lg"
+            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+          >
+            Start New Interview
+          </Button>
+        </motion.div>
+      </DialogTrigger>
 
-          {/* Resume Upload Area */}
-          <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-6 bg-gray-800 text-center hover:bg-gray-700 cursor-pointer">
-            <label className="w-full cursor-pointer">
-              <input
-                type="file"
-                className="hidden"
-                accept=".pdf"
-                onChange={(e) => setResume(e.target.files?.[0] || null)}
+      <DialogContent className="max-w-md max-h-[500px] overflow-y-auto bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+              New Interview Setup
+            </DialogTitle>
+            <DialogDescription className="text-gray-300 mt-2">
+              Provide position details and required documents
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-6 space-y-6">
+            {/* Job Name */}
+            <div className="space-y-2">
+              <Label className="text-gray-300">Position Title *</Label>
+              <Input
+                className="bg-white/5 border-white/10 text-gray-300 focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g. Senior Frontend Developer"
+                value={jobName}
+                onChange={(e) => setJobName(e.target.value)}
               />
-              <div className="text-white text-sm">
-                {resume ? <span>{resume.name}</span> : "Click to upload your resume (PDF only)"}
-              </div>
-            </label>
-          </div>
+            </div>
 
-          {/* Optional Job Description Form */}
-          <div className="space-y-4">
-            <Button
-              className="bg-blue-500 hover:bg-blue-600 text-white w-full"
-              onClick={() => setShowJobDescriptionForm((prev) => !prev)}
-            >
-              {showJobDescriptionForm ? "Cancel Job Description" : "Add Job Description (Optional)"}
-            </Button>
+            {/* Resume Upload */}
+            <div className="space-y-2">
+              <Label className="text-gray-300">Your Resume (PDF) *</Label>
+              <FileUploadArea
+                file={resume}
+                onFileChange={setResume}
+                accept="application/pdf"
+              />
+            </div>
 
-            {showJobDescriptionForm && (
-              <div className="space-y-4">
-                <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-6 bg-gray-800 text-center hover:bg-gray-700 cursor-pointer">
-                  <label className="w-full cursor-pointer">
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept=".pdf"
-                      onChange={(e) => setJobDescriptionFile(e.target.files?.[0] || null)}
-                    />
-                    <div className="text-white text-sm">
-                      {jobDescriptionFile ? (
-                        <span>{jobDescriptionFile.name}</span>
-                      ) : (
-                        "Click to upload Job Description (PDF only)"
-                      )}
-                    </div>
-                  </label>
-                </div>
-                <textarea
-                  className="w-full px-4 py-2 bg-gray-800 text-white rounded border border-gray-600 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Or write the Job Description here"
+            {/* Job Description */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-gray-300">Job Description (Optional)</Label>
+                <Textarea
+                  className="bg-white/5 border-white/10 text-gray-300 focus:ring-2 focus:ring-blue-500 resize-none"
+                  placeholder="Paste job description text here..."
                   value={jobDescriptionText}
                   onChange={(e) => setJobDescriptionText(e.target.value)}
-                  rows={3}
-                ></textarea>
+                  rows={4}
+                />
+                <div className="text-center text-sm text-gray-400">or</div>
               </div>
-            )}
-          </div>
 
-          {/* Submit Button */}
-          <Button className="bg-green-500 hover:bg-green-600 text-white w-full" onClick={handleCreate}>
-            Submit
-          </Button>
-        </div>
-      </SheetContent>
-    </Sheet>
+              <FileUploadArea
+                file={jobDescriptionFile}
+                onFileChange={setJobDescriptionFile}
+                accept="application/pdf"
+              />
+            </div>
+
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                onClick={handleCreate}
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                disabled={!jobName || !resume || isLoading}
+              >
+                {isLoading ? "Creating..." : "Start Interview"}
+              </Button>
+            </motion.div>
+          </div>
+        </motion.div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
-export default CreateInterviewSheet;
+const FileUploadArea = ({
+  file,
+  onFileChange,
+  accept,
+}: {
+  file: File | null;
+  onFileChange: (file: File | null) => void;
+  accept: string;
+}) => (
+  <motion.div className="group" whileHover={{ scale: 1.02 }}>
+    <label className="flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl p-6 cursor-pointer transition-colors hover:border-blue-400/30 bg-white/5">
+      <input
+        type="file"
+        className="hidden"
+        accept={accept}
+        onChange={(e) => onFileChange(e.target.files?.[0] || null)}
+      />
+
+      <div className="flex flex-col items-center gap-2">
+        <UploadCloud className="h-6 w-6 text-gray-400 group-hover:text-blue-400" />
+
+        {file ? (
+          <div className="flex items-center gap-2 mt-2">
+            <FileText className="h-4 w-4 text-gray-300" />
+            <span className="text-sm font-medium text-gray-300">{file.name}</span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onFileChange(null);
+              }}
+              className="text-red-400 hover:text-red-300"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <>
+            <span className="text-sm font-medium text-gray-300">Upload PDF</span>
+            <span className="text-xs text-gray-400">Click or drag and drop</span>
+          </>
+        )}
+      </div>
+    </label>
+  </motion.div>
+);
+
+export default CreateInterviewDialog;
