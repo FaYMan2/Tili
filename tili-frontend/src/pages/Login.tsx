@@ -38,7 +38,7 @@ const Login = () => {
 
       setIsloggedIn(true)
       setUsernamAtom(username)
-      navigate('/')
+      navigate(-1)
       
       alert(`Welcome, ${username}`);
     } catch (err: any) {

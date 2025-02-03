@@ -4,10 +4,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { AlertCircle, CheckCircle, Zap, ArrowLeft } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import axios from 'axios';
 import { useAtom } from 'jotai';
-import { usernameAtom } from '@/utils/atom';
-// Import shadcn Accordion components
+import { usernameAtom,isLoggedInAtom } from '@/utils/atom';
+
 import {
   Accordion,
   AccordionItem,
@@ -18,7 +17,9 @@ import {
 const ResultsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [username] = useAtom(usernameAtom);
+  const [username,setUsername] = useAtom(usernameAtom);
+  const [,setIsLoggedIn] = useAtom(isLoggedInAtom)
+
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [score, setScore] = useState(0);
@@ -27,13 +28,41 @@ const ResultsPage = () => {
     const fetchResults = async () => {
       try {
         const token = localStorage.getItem('access_token');
-        const response = await axios.get(`http://localhost:8000/result/${username}/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const response = await fetch(`http://localhost:8000/result/${username}/${id}`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
         });
 
-        setResults(response.data);
-        const answered = response.data.filter((r: any) => r.answer).length;
-        setScore(Math.round((answered / response.data.length) * 100));
+        // If interview is not completed (status 402), navigate to interview page
+        if (response.status === 402) {
+          const errorData = await response.json();
+          if (errorData.detail === "Interview not completed") {
+            navigate(`/interview/${id}`);
+            return;
+          }
+        }
+
+        if (response.status == 401){
+          const errorData = await response.json()
+          if (errorData.detail === "Token has expired") {
+            setIsLoggedIn(false)
+            setUsername("")
+            navigate("/login")
+            return;
+          }
+        }
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch results");
+        }
+
+        const data = await response.json();
+        setResults(data);
+        const answered = data.filter((r: any) => r.answer).length;
+        setScore(Math.round((answered / data.length) * 100));
       } catch (error) {
         console.error('Error fetching results:', error);
       } finally {
@@ -42,7 +71,7 @@ const ResultsPage = () => {
     };
 
     fetchResults();
-  }, [id, username]);
+  }, [id, username, navigate]);
 
   const getAnswerStatus = (answer: string | null) => {
     if (!answer) return 'skipped';
@@ -64,7 +93,6 @@ const ResultsPage = () => {
       className="min-h-[calc(100vh-4rem)] bg-gray-900 p-8"
     >
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
         <motion.div
           initial={{ y: -20 }}
           animate={{ y: 0 }}
@@ -73,7 +101,7 @@ const ResultsPage = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/dashboard")}
             className="flex items-center gap-2 text-blue-400 hover:text-blue-300"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -115,7 +143,6 @@ const ResultsPage = () => {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="p-4">
-                    {/* Your Answer */}
                     {result.answer && (
                       <div className="mb-4 p-4 bg-black/20 rounded-lg">
                         <h4 className="text-sm font-semibold text-blue-400 mb-2">Your Answer</h4>
@@ -123,7 +150,6 @@ const ResultsPage = () => {
                       </div>
                     )}
 
-                    {/* Review */}
                     <div className="p-4 bg-black/20 rounded-lg text-gray-100">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}

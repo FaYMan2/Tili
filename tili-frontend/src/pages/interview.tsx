@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAtom } from "jotai";
 import { motion } from "framer-motion";
-import { usernameAtom } from "@/utils/atom";
+import { usernameAtom,isLoggedInAtom } from "@/utils/atom";
 import { CircularProgressbar } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import ReactMarkdown from "react-markdown";
@@ -21,7 +21,9 @@ const Interview: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showGuidelines, setShowGuidelines] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [username] = useAtom(usernameAtom);
+  const [username,setUsername] = useAtom(usernameAtom);
+  const [,setIsLoggedIn] = useAtom(isLoggedInAtom)
+
   const [timer, setTimer] = useState(10);
   const [currentPhase, setCurrentPhase] = useState<"reading" | "writing">("reading");
   const [answer, setAnswer] = useState("");
@@ -50,6 +52,16 @@ const Interview: React.FC = () => {
           },
         }
       );
+      
+      if (response.status == 401){
+        const errorData = await response.json()
+        if (errorData.detail === "Token has expired") {
+          setIsLoggedIn(false)
+          setUsername("")
+          navigate("/login")
+          return;
+        }
+      }
 
       if (!response.ok) throw new Error("Failed to fetch question");
       const data = await response.json();
@@ -107,6 +119,16 @@ const Interview: React.FC = () => {
         }
       );
 
+      if (response.status == 401){
+        const errorData = await response.json()
+        if (errorData.detail === "Token has expired") {
+          setIsLoggedIn(false)
+          setUsername("")
+          navigate("/login")
+          return;
+        }
+      }
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || "Failed to submit answer");

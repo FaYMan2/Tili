@@ -294,6 +294,9 @@ async def getResults(
         questions_arr = questions_data.get('data', [])
         reviews = interview.get('reviews')
         
+        if len([q for q in questions_arr if q['answer'] is None]):
+            raise HTTPException(status_code = 402, detail="Interview not completed")
+        
         if reviews is not None:
             return reviews
         
