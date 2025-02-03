@@ -4,26 +4,28 @@ import { Link } from 'react-router-dom';
 import { Mail, Lock } from 'lucide-react';
 import axios from 'axios';
 import { useAtom } from "jotai";
-import { isLoggedInAtom,usernameAtom } from '../utils/atom';
+import { isLoggedInAtom, usernameAtom } from '../utils/atom';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [,setIsloggedIn] = useAtom(isLoggedInAtom)
-  const [,setUsernamAtom] = useAtom(usernameAtom)
+  const [, setIsloggedIn] = useAtom(isLoggedInAtom);
+  const [, setUsernamAtom] = useAtom(usernameAtom);
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
   
     try {
+      setIsLoading(true);
       const formData = new FormData();
       formData.append('username', email);
       formData.append('password', password);
-  
+      
       const response = await axios.post('http://localhost:8000/login', formData, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -31,26 +33,27 @@ const Login = () => {
       });
   
       const { access_token, refresh_token, username } = response.data;
-
+  
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('refresh_token', refresh_token);
-      localStorage.setItem('username',username)
-
-      setIsloggedIn(true)
-      setUsernamAtom(username)
-      navigate(-1)
+      localStorage.setItem('username', username);
+  
+      setIsloggedIn(true);
+      setUsernamAtom(username);
+      navigate(-1);
       
-      alert(`Welcome, ${username}`);
+      //alert(`Welcome, ${username}`);
     } catch (err: any) {
       if (err.response && err.response.data && err.response.data.detail) {
         setError(err.response.data.detail);
       } else {
         setError('Network error. Please try again later.');
       }
+    } finally {
+      setIsLoading(false);
     }
   };
   
-
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4">
       <motion.div
@@ -88,14 +91,20 @@ const Login = () => {
               />
             </div>
           </div>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            type="submit"
-            className="w-full bg-blue-500 text-white py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors shadow-lg"
-          >
-            Log In
-          </motion.button>
+          {isLoading ? (
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            </div>
+          ) : (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              className="w-full bg-blue-500 text-white py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors shadow-lg"
+            >
+              Log In
+            </motion.button>
+          )}
         </form>
         <p className="mt-4 text-center text-gray-300">
           Don't have an account?{' '}

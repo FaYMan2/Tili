@@ -154,16 +154,16 @@ const ResultsPage = () => {
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
-                          h2: ({ node, ...props }) => (
+                          h2: ({ ...props }) => (
                             <h2 className="text-xl font-bold text-gray-100 mb-4 flex items-center gap-2" {...props} />
                           ),
-                          ul: ({ node, ...props }) => (
+                          ul: ({ ...props }) => (
                             <ul className="list-disc pl-6 space-y-2 text-gray-100" {...props} />
                           ),
-                          strong: ({ node, ...props }) => (
+                          strong: ({  ...props }) => (
                             <strong className="text-blue-400" {...props} />
                           ),
-                          code: ({ node, ...props }) => (
+                          code: ({  ...props }) => (
                             <code className="bg-white/10 px-2 py-1 rounded text-sm text-gray-100" {...props} />
                           ),
                         }}

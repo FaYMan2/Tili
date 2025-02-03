@@ -356,7 +356,7 @@ const Interview: React.FC = () => {
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
-                      code({node, inline, className, children, ...props}) {
+                      code({className, children, ...props}) {
                         return (
                           <code className={clsx(className, "bg-white/10 px-1 rounded")} {...props}>
                             {children}
