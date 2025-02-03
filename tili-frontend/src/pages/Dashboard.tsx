@@ -85,7 +85,6 @@ const Dashboard: React.FC = () => {
         toast.success("Interview created successfully!", {
           description: `Interview ID: ${data.interview_id}`,
         });
-        // Optionally, refresh the interviews list
       } else {
         const errorData = await response.json();
         toast.error("Failed to create interview", {
@@ -130,7 +129,7 @@ const Dashboard: React.FC = () => {
             <h3 className="text-xl font-semibold text-white mb-2">{interview.job_name}</h3>
             <p className="text-gray-300 mb-2">
               <strong>Interview Date:</strong>{" "}
-              {new Date(interview.created_at).toLocaleString()}
+              {new Date (interview.created_at).toLocaleString()}
             </p>
             <p
               className={`font-semibold text-lg ${
