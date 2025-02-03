@@ -305,7 +305,7 @@ async def getResults(
         
         reviews_list = [result.model_dump() for result in review_results]
         
-        review_response = DB.table('Interview').update({"reviews": reviews_list}).eq('id', id).execute()
+        review_response = DB.table('Interview').update({"reviews": reviews_list,"result" : 1}).eq('id', id).execute()
         
         return review_response.data[0].get('reviews')
     

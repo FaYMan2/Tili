@@ -121,7 +121,11 @@ const Dashboard: React.FC = () => {
             key={interview.id}
             whileHover={{ y: -5 }}
             className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-white/10 shadow-lg hover:cursor-pointer"
-            onClick={() => {navigate(`/interview/${interview.id}`)}}
+            onClick={() => 
+              interview.result === 1 
+              ? navigate(`/results/${interview.id}`)
+              : navigate(`/interview/${interview.id}`)
+            }
           >
             <h3 className="text-xl font-semibold text-white mb-2">{interview.job_name}</h3>
             <p className="text-gray-300 mb-2">
