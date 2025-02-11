@@ -38,8 +38,9 @@ You are a seasoned interviewer evaluating a candidate's response. Provide a **co
 question : {question}
 answer : {answer}
 
-`[When no answer provided]`  
+`[When no answer provided or empty string]`  
 "Thank you for engaging with this question! While we didn't receive a response this time, consider focusing on **[key concept from question]** in future answers."
+  else
     return f'''
     **✅ Strength**: [1-2 statements identifying strongest element]  
     **💡 Refinement**: [1 actionable suggestion]  

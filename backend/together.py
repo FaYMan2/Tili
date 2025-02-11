@@ -7,10 +7,36 @@ import asyncio
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 import logging
 from typing import List
-
+import time
 
 if "TOGETHER_API_KEY" not in os.environ:    
     os.environ['TOGETHER_API_KEY'] = TOGETHER_API_KEY
+
+class RateLimiter:
+    def __init__(self,maxRequests : int,interval : int):
+        self.maxRequests = maxRequests
+        self.interval = interval
+        self.timestamps = []
+        self.lock = asyncio.Lock()
+        
+    async def acquire(self):
+        while True:
+            async with self.lock:
+                currentTime = time.time()
+                self.timestamps = [
+                    t for t in self.timestamps
+                    if currentTime - t < self.interval
+                ]
+                
+                if len(self.timestamps) < self.maxRequests:
+                    self.timestamps.append(currentTime)
+                    return
+                else:
+                    oldest = self.timestamps[0]
+                    waitTime = oldest + self.interval - currentTime
+                    waitTime = max(waitTime,0)
+                    
+            await asyncio.sleep(waitTime)
 
 llm = ChatTogether(
     model= 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
@@ -20,8 +46,10 @@ llm = ChatTogether(
     max_retries=2,
     api_key=TOGETHER_API_KEY
 )
+rateLimiter = RateLimiter(60,60)
 
 async def createQuestions(resumeText : str, JobDescription : str) -> Questions:
+    await rateLimiter.acquire()
     questionPrompt = QUESTION_PROMPT.format(
         resume_data = resumeText,
         job_description = JobDescription
@@ -33,6 +61,7 @@ async def createQuestions(resumeText : str, JobDescription : str) -> Questions:
 
 async def createResponse(question : str, answer : str):
     try:
+        await rateLimiter.acquire()
         response_prompt = RESPONSE_PROMPT.format(
             question = question,
             answer = answer
@@ -78,7 +107,7 @@ async def createReviews(interview: InterviewData) -> List[ReviewResult]:
                     question=d.question,
                     answer=d.answer or "[No answer provided]"
                 )
-                
+                await rateLimiter.acquire()
                 response = await llm.ainvoke(review_prompt)
                 result.review = response.content
                 return result
