@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAtom } from "jotai";
 import { useNavigate } from "react-router-dom";
-import { usernameAtom, isLoggedInAtom } from "../utils/atom";
+import { usernameAtom, isLoggedInAtom,servAddr } from "../utils/atom";
 import CreateInterviewSheet from "@/components/CreateInterviewSheet";
 import { Toaster, toast } from "sonner";  
 interface InterviewCard {
@@ -30,7 +30,7 @@ const Dashboard: React.FC = () => {
       if (!username) return;
 
       try {
-        const response = await fetch(`http://127.0.0.1:8000/interviews/${username}`, {
+        const response = await fetch(`${servAddr}/interviews/${username}`, {
           method: "GET",
           headers: {
             Accept: "application/json",

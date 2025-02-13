@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAtom } from "jotai";
 import { motion } from "framer-motion";
-import { usernameAtom,isLoggedInAtom } from "@/utils/atom";
+import { usernameAtom,isLoggedInAtom,servAddr } from "@/utils/atom";
 import { CircularProgressbar } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import ReactMarkdown from "react-markdown";
@@ -43,7 +43,7 @@ const Interview: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await fetch(
-        `http://localhost:8000/interviews/question/${username}/${id}`,
+        `${servAddr}/interviews/question/${username}/${id}`,
         {
           method: "GET",
           headers: {
@@ -103,7 +103,7 @@ const Interview: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/interviews/answer/${username}/${interviewId}`,
+        `${servAddr}/interviews/answer/${username}/${interviewId}`,
         {
           method: "POST",
           headers: {

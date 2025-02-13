@@ -126,3 +126,49 @@ async def startInterview(username: str, id: str, token: str = Depends(oauth2_sch
         if ques.get('answer') is None:
             return {"question": ques.get('question'), "question_index": qIdx + 1}
     return {"message": "All questions have been answered"}
+
+
+@app.get("/result/{username}/{id}")
+async def getResults(
+    username: str,
+    id: str,
+    token: str = Depends(oauth2_scheme)
+):
+    try:
+        payload = auth.decodeToken(token)
+        _, payloadUsername = payload['sub'].split('+')
+        if payloadUsername != username:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        interviewResponse = DB.table('Interview').select('questions', 'creator','reviews').eq('id', id).execute()
+        
+        if not interviewResponse.data:
+            raise HTTPException(status_code=404, detail="Interview not found")
+        
+        interview = interviewResponse.data[0]
+        creator = interview.get('creator')
+        if creator != username:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        questions_data = interview.get('questions', {})
+        questions_arr = questions_data.get('data', [])
+        reviews = interview.get('reviews')
+        
+        if reviews is not None:
+            return reviews
+        
+        input_data = InterviewData(data=[interviewQuestions(**q) for q in questions_arr])
+        
+        review_results = await createReviews(input_data)
+        
+        reviews_list = [result.model_dump() for result in review_results]
+        
+        review_response = DB.table('Interview').update({"reviews": reviews_list}).eq('id', id).execute()
+        
+        return review_response.data[0].get('reviews')
+    
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.logger.error(f"Error processing answer: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")

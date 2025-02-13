@@ -5,7 +5,7 @@ import { AlertCircle, CheckCircle, Zap, ArrowLeft } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useAtom } from 'jotai';
-import { usernameAtom,isLoggedInAtom } from '@/utils/atom';
+import { usernameAtom,isLoggedInAtom,servAddr } from '@/utils/atom';
 
 import {
   Accordion,
@@ -28,7 +28,7 @@ const ResultsPage = () => {
     const fetchResults = async () => {
       try {
         const token = localStorage.getItem('access_token');
-        const response = await fetch(`http://localhost:8000/result/${username}/${id}`, {
+        const response = await fetch(`${servAddr}/result/${username}/${id}`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,

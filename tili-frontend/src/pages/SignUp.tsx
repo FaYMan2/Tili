@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Mail, Lock, User } from 'lucide-react';
 import axios from 'axios';
+import { servAddr } from '@/utils/atom';
 
 const SignUp = () => {
   const [name, setName] = useState('');
@@ -17,7 +18,7 @@ const SignUp = () => {
     setSuccess(false);
 
     try {
-      const response = await axios.post('http://localhost:8000/signup', {
+      const response = await axios.post(`${servAddr}/signup`, {
         username: name,
         email,
         password,

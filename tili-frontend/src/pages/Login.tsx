@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Mail, Lock } from 'lucide-react';
 import axios from 'axios';
 import { useAtom } from "jotai";
-import { isLoggedInAtom, usernameAtom } from '../utils/atom';
+import { isLoggedInAtom, usernameAtom , servAddr} from '../utils/atom';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
@@ -26,7 +26,7 @@ const Login = () => {
       formData.append('username', email);
       formData.append('password', password);
       
-      const response = await axios.post('http://localhost:8000/login', formData, {
+      const response = await axios.post(`${servAddr}/login`, formData, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
