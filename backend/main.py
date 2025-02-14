@@ -111,21 +111,38 @@ async def createInterview(username: str, interviewData: interviewFromData, token
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 @app.get('/interviews/question/{username}/{id}')
-async def startInterview(username: str, id: str, token: str = Depends(oauth2_scheme)):
-    _, auth_username = get_authenticated_user(token)
-    if auth_username != username:
-        raise HTTPException(status_code=403, detail="Access denied")
-    
-    data = DB.table('Interview').select('creator', 'questions').eq('id', id).execute()
-    if not data.data:
-        raise HTTPException(status_code=404, detail="Interview not found")
-    
-    interview = data.data[0]
-    questionsArr = interview.get('questions', {}).get('data', [])
-    for qIdx, ques in enumerate(questionsArr):
-        if ques.get('answer') is None:  
-            return {"question": ques.get('question'), "question_index": qIdx + 1}
-    return {"message": "All questions have been answered"}
+async def startInterview(
+    username: str,
+    id: str,
+    token: str = Depends(oauth2_scheme)
+):
+    try:
+        payload = auth.decodeToken(token)
+        _, payloadUsername = payload['sub'].split('+')
+        if payloadUsername != username:
+            raise HTTPException(status_code=403, detail="Access denied")
+        data = DB.table('Interview').select('creator', 'questions').eq('id', id).execute()
+        if not data.data:
+            raise HTTPException(status_code=404, detail="Interview not found")
+        interview = data.data[0]
+        creator = interview.get('creator')
+        questionData = interview.get('questions')
+        if creator != username:
+            raise HTTPException(status_code=403, detail="Access denied")
+        questionsArr = questionData.get('data', []) if questionData else []
+        if not questionsArr:
+            raise HTTPException(status_code=404, detail="No questions available")
+        for qIdx, ques in enumerate(questionsArr):
+            if ques.get('answer') is None:
+                return {
+                    "question": ques.get('question'),
+                    "question_index": qIdx + 1
+                }
+        return {"message": "All questions have been answered"}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 
 @app.get("/result/{username}/{id}")
@@ -172,3 +189,57 @@ async def getResults(
     except Exception as e:
         logger.logger.error(f"Error processing answer: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+    
+    
+    
+@app.post('/interviews/answer/{username}/{id}')
+async def addAnswer(
+    username: str,
+    id: str,
+    answer_data: Answer,
+    token: str = Depends(oauth2_scheme)
+):
+    try:
+        payload = auth.decodeToken(token)
+        _, payloadUsername = payload['sub'].split('+')
+        if payloadUsername != username:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        interview_response = DB.table('Interview').select('creator,questions').eq('id', id).execute()
+        if not interview_response.data:
+            raise HTTPException(status_code=404, detail="Interview not found")
+        interview = interview_response.data[0]
+        creator = interview.get('creator')
+        if creator != username:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        questions_data = interview.get('questions', {})
+        questions_arr = questions_data.get('data', [])
+        if answer_data.answerNum >= len(questions_arr) or answer_data.answerNum < 0:
+            raise HTTPException(status_code=400, detail="Invalid question index")
+        question_entry = questions_arr[answer_data.answerNum]
+        
+        if question_entry.get('answer') is not None:
+            raise HTTPException(status_code=400, detail="Question already answered")
+        
+        if question_entry.get('question') != answer_data.question:
+            raise HTTPException(status_code=400, detail="Question text mismatch")
+        
+        question_entry['answer'] = answer_data.answerData
+        questions_data['data'] = questions_arr
+        update_response = DB.table('Interview').update({'questions': questions_data}).eq('id', id).execute()
+        
+        if not update_response.data:
+            raise HTTPException(status_code=500, detail="Failed to update answer")
+        
+        
+        return StreamingResponse(
+            content=createResponse(answer=answer_data.answerData,
+                                    question=answer_data.question
+                                ))
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.logger.error(f"Error processing answer: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+    
