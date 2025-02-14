@@ -113,11 +113,7 @@ const CreateInterviewDialog: React.FC<CreateInterviewDialogProps> = ({ onCreate 
             {/* Resume Upload */}
             <div className="space-y-2">
               <Label className="text-gray-300 text-sm md:text-base">Your Resume (PDF) *</Label>
-              <FileUploadArea
-                file={resume}
-                onFileChange={setResume}
-                accept="application/pdf"
-              />
+              <FileUploadArea file={resume} onFileChange={setResume} accept="application/pdf" />
             </div>
 
             {/* Job Description */}
@@ -134,13 +130,9 @@ const CreateInterviewDialog: React.FC<CreateInterviewDialogProps> = ({ onCreate 
                 <div className="text-center text-xs md:text-sm text-gray-400">or</div>
               </div>
 
-              <FileUploadArea
-                file={jobDescriptionFile}
-                onFileChange={setJobDescriptionFile}
-                accept="application/pdf"
-              />
+              <FileUploadArea file={jobDescriptionFile} onFileChange={setJobDescriptionFile} accept="application/pdf" />
             </div>
-
+            
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button
                 onClick={handleCreate}
@@ -148,6 +140,16 @@ const CreateInterviewDialog: React.FC<CreateInterviewDialogProps> = ({ onCreate 
                 disabled={!jobName || !resume || isLoading}
               >
                 {isLoading ? "Creating..." : "Start Interview"}
+              </Button>
+            </motion.div>
+
+            {/* Cancel button for smaller screens */}
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="block md:hidden">
+              <Button
+                onClick={() => setOpen(false)}
+                className="w-full bg-gray-700 hover:bg-gray-600 text-sm md:text-base"
+              >
+                Cancel
               </Button>
             </motion.div>
           </div>
@@ -174,10 +176,8 @@ const FileUploadArea = ({
         accept={accept}
         onChange={(e) => onFileChange(e.target.files?.[0] || null)}
       />
-
       <div className="flex flex-col items-center gap-2">
         <UploadCloud className="h-5 w-5 md:h-6 md:w-6 text-gray-400 group-hover:text-blue-400" />
-
         {file ? (
           <div className="flex items-center gap-2 mt-1 md:mt-2">
             <FileText className="h-4 w-4 text-gray-300" />
@@ -204,6 +204,5 @@ const FileUploadArea = ({
     </label>
   </motion.div>
 );
-
 
 export default CreateInterviewDialog;
