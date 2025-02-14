@@ -3,7 +3,9 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Mail, Lock, User } from 'lucide-react';
 import axios from 'axios';
-import { servAddr } from '@/utils/atom';
+import { servAddr,isLoggedInAtom } from '@/utils/atom';
+import { useNavigate } from 'react-router-dom';
+import { useAtom } from 'jotai';
 
 const SignUp = () => {
   const [name, setName] = useState('');
@@ -11,12 +13,21 @@ const SignUp = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [isLoggedin,] = useAtom(isLoggedInAtom)
+  const navigate = useNavigate();
 
+  if(isLoggedin){
+    navigate('/')
+  }
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess(false);
-
+    if(isLoggedin){
+      navigate('/')
+      return;
+    }
     try {
       const response = await axios.post(`${servAddr}/signup`, {
         username: name,
@@ -29,6 +40,7 @@ const SignUp = () => {
       setEmail('');
       setPassword('');
       alert(response.data.message);
+      navigate('/login')
     } catch (err: any) {
       if (err.response && err.response.data && err.response.data.detail) {
         setError(err.response.data.detail);

@@ -2,9 +2,10 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAtom } from "jotai";
 import { useNavigate } from "react-router-dom";
-import { usernameAtom, isLoggedInAtom,servAddr } from "../utils/atom";
+import { usernameAtom, isLoggedInAtom, servAddr } from "../utils/atom";
 import CreateInterviewSheet from "@/components/CreateInterviewSheet";
-import { Toaster, toast } from "sonner";  
+import { Toaster, toast } from "sonner";
+
 interface InterviewCard {
   id: number;
   created_at: string;
@@ -40,15 +41,12 @@ const Dashboard: React.FC = () => {
 
         if (response.ok) {
           const data = await response.json();
-          console.log(data)
           setInterviews(data.interviews);
         } else {
           const errorData = await response.json();
           setError(errorData.detail || "Failed to fetch interviews.");
           if (response.status === 401) {
-            localStorage.removeItem("username");
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
+            localStorage.clear();
             setIsLoggedIn(false);
             setUsername("");
             navigate("/login");
@@ -65,7 +63,7 @@ const Dashboard: React.FC = () => {
   const handleCreateInterview = async (jobName: string, resume: string | null, jobDescription: string) => {
     const token = localStorage.getItem("access_token");
     if (!token) return;
-    console.log(jobDescription)
+
     try {
       const response = await fetch(`${servAddr}/createInterview/${username}`, {
         method: "POST",
@@ -74,7 +72,7 @@ const Dashboard: React.FC = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          user_data: resume || "", // Pass resume or empty string
+          user_data: resume || "",
           job_description: jobDescription,
           job_name: jobName,
         }),
@@ -86,15 +84,13 @@ const Dashboard: React.FC = () => {
           description: `Interview ID: ${data.interview_id}`,
         });
       } else {
-        if (response.status == 401){
-          const errorData = await response.json()
+        if (response.status === 401) {
+          const errorData = await response.json();
           if (errorData.detail === "Token has expired") {
-            setIsLoggedIn(false)
-            localStorage.removeItem("username");
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
-            setUsername("")
-            navigate("/login")
+            localStorage.clear();
+            setIsLoggedIn(false);
+            setUsername("");
+            navigate("/login");
             return;
           }
         }
@@ -119,46 +115,39 @@ const Dashboard: React.FC = () => {
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.6, staggerChildren: 0.3 } },
       }}
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12"
     >
-      <Toaster position="top-right" richColors /> {/* Add Toaster component */}
-      <div className="flex justify-between items-center mb-10">
-        <h1 className="text-5xl font-bold text-white">Dashboard</h1>
+      <Toaster position="top-right" richColors />
+
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-10 gap-4">
+        <h1 className="text-3xl sm:text-5xl font-bold text-white text-center sm:text-left">Dashboard</h1>
         <CreateInterviewSheet onCreate={handleCreateInterview} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {/* Interviews Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 overflow-auto">
         {interviews?.map((interview) => (
           <motion.div
             key={interview.id}
             whileHover={{ y: -5 }}
-            className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-white/10 shadow-lg hover:cursor-pointer"
-            onClick={() => 
-              interview.result === 1 
-              ? navigate(`/results/${interview.id}`)
-              : navigate(`/interview/${interview.id}`)
+            className="bg-white/10 p-5 sm:p-6 rounded-xl border border-white/20 shadow-lg hover:cursor-pointer transition-all"
+            onClick={() =>
+              interview.result === 1
+                ? navigate(`/results/${interview.id}`)
+                : navigate(`/interview/${interview.id}`)
             }
           >
-            <h3 className="text-xl font-semibold text-white mb-2">{interview.job_name}</h3>
-            <p className="text-gray-300 mb-2">
-              <strong>Interview Date:</strong>{" "}
-              {new Date (interview.created_at).toLocaleString()}
+            <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">{interview.job_name}</h3>
+            <p className="text-gray-300 text-sm sm:text-base mb-2">
+              <strong>Interview Date:</strong> {new Date(interview.created_at).toLocaleString()}
             </p>
             <p
-              className={`font-semibold text-lg ${
-                interview.result === 1
-                  ? "text-green-500"
-                  : interview.result === 2
-                  ? "text-yellow-400"
-                  : "text-yellow-400"
+              className={`font-semibold text-sm sm:text-lg ${
+                interview.result === 1 ? "text-green-500" : "text-yellow-400"
               }`}
             >
-              <strong>Status:</strong>{" "}
-              {interview.result === 1
-                ? "Completed"
-                : interview.result === 2
-                ? "Pending"
-                : "Pending"}
+              <strong>Status:</strong> {interview.result === 1 ? "Completed" : "Pending"}
             </p>
           </motion.div>
         ))}

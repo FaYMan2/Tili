@@ -80,30 +80,30 @@ const CreateInterviewDialog: React.FC<CreateInterviewDialogProps> = ({ onCreate 
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
             size="lg"
-            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white text-sm md:text-base px-4 py-2 md:px-6 md:py-3"
           >
             Start New Interview
           </Button>
         </motion.div>
       </DialogTrigger>
 
-      <DialogContent className="max-w-md max-h-[500px] overflow-y-auto bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl">
+      <DialogContent className="max-w-[95vw] md:max-w-md max-h-[90vh] md:max-h-[500px] overflow-y-auto bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 md:p-6">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+            <DialogTitle className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
               New Interview Setup
             </DialogTitle>
-            <DialogDescription className="text-gray-300 mt-2">
+            <DialogDescription className="text-gray-300 mt-1 md:mt-2 text-sm md:text-base">
               Provide position details and required documents
             </DialogDescription>
           </DialogHeader>
 
-          <div className="mt-6 space-y-6">
+          <div className="mt-4 md:mt-6 space-y-4 md:space-y-6">
             {/* Job Name */}
             <div className="space-y-2">
-              <Label className="text-gray-300">Position Title *</Label>
+              <Label className="text-gray-300 text-sm md:text-base">Position Title *</Label>
               <Input
-                className="bg-white/5 border-white/10 text-gray-300 focus:ring-2 focus:ring-blue-500"
+                className="bg-white/5 border-white/10 text-gray-300 focus:ring-2 focus:ring-blue-500 text-sm md:text-base h-9 md:h-10"
                 placeholder="e.g. Senior Frontend Developer"
                 value={jobName}
                 onChange={(e) => setJobName(e.target.value)}
@@ -112,7 +112,7 @@ const CreateInterviewDialog: React.FC<CreateInterviewDialogProps> = ({ onCreate 
 
             {/* Resume Upload */}
             <div className="space-y-2">
-              <Label className="text-gray-300">Your Resume (PDF) *</Label>
+              <Label className="text-gray-300 text-sm md:text-base">Your Resume (PDF) *</Label>
               <FileUploadArea
                 file={resume}
                 onFileChange={setResume}
@@ -123,15 +123,15 @@ const CreateInterviewDialog: React.FC<CreateInterviewDialogProps> = ({ onCreate 
             {/* Job Description */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-gray-300">Job Description (Optional)</Label>
+                <Label className="text-gray-300 text-sm md:text-base">Job Description (Optional)</Label>
                 <Textarea
-                  className="bg-white/5 border-white/10 text-gray-300 focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="bg-white/5 border-white/10 text-gray-300 focus:ring-2 focus:ring-blue-500 resize-none text-sm md:text-base"
                   placeholder="Paste job description text here..."
                   value={jobDescriptionText}
                   onChange={(e) => setJobDescriptionText(e.target.value)}
-                  rows={4}
+                  rows={3}
                 />
-                <div className="text-center text-sm text-gray-400">or</div>
+                <div className="text-center text-xs md:text-sm text-gray-400">or</div>
               </div>
 
               <FileUploadArea
@@ -144,7 +144,7 @@ const CreateInterviewDialog: React.FC<CreateInterviewDialogProps> = ({ onCreate 
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button
                 onClick={handleCreate}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-sm md:text-base"
                 disabled={!jobName || !resume || isLoading}
               >
                 {isLoading ? "Creating..." : "Start Interview"}
@@ -167,7 +167,7 @@ const FileUploadArea = ({
   accept: string;
 }) => (
   <motion.div className="group" whileHover={{ scale: 1.02 }}>
-    <label className="flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl p-6 cursor-pointer transition-colors hover:border-blue-400/30 bg-white/5">
+    <label className="flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl p-4 md:p-6 cursor-pointer transition-colors hover:border-blue-400/30 bg-white/5">
       <input
         type="file"
         className="hidden"
@@ -176,12 +176,14 @@ const FileUploadArea = ({
       />
 
       <div className="flex flex-col items-center gap-2">
-        <UploadCloud className="h-6 w-6 text-gray-400 group-hover:text-blue-400" />
+        <UploadCloud className="h-5 w-5 md:h-6 md:w-6 text-gray-400 group-hover:text-blue-400" />
 
         {file ? (
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-2 mt-1 md:mt-2">
             <FileText className="h-4 w-4 text-gray-300" />
-            <span className="text-sm font-medium text-gray-300">{file.name}</span>
+            <span className="text-xs md:text-sm font-medium text-gray-300 truncate max-w-[150px] md:max-w-none">
+              {file.name}
+            </span>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -194,7 +196,7 @@ const FileUploadArea = ({
           </div>
         ) : (
           <>
-            <span className="text-sm font-medium text-gray-300">Upload PDF</span>
+            <span className="text-sm md:text-base font-medium text-gray-300">Upload PDF</span>
             <span className="text-xs text-gray-400">Click or drag and drop</span>
           </>
         )}
@@ -202,5 +204,6 @@ const FileUploadArea = ({
     </label>
   </motion.div>
 );
+
 
 export default CreateInterviewDialog;
