@@ -123,7 +123,7 @@ async def startInterview(username: str, id: str, token: str = Depends(oauth2_sch
     interview = data.data[0]
     questionsArr = interview.get('questions', {}).get('data', [])
     for qIdx, ques in enumerate(questionsArr):
-        if ques.get('answer') is None:
+        if ques.get('answer') is None:  
             return {"question": ques.get('question'), "question_index": qIdx + 1}
     return {"message": "All questions have been answered"}
 

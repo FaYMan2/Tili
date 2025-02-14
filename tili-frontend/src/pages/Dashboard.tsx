@@ -67,7 +67,7 @@ const Dashboard: React.FC = () => {
     if (!token) return;
     console.log(jobDescription)
     try {
-      const response = await fetch(`http://127.0.0.1:8000/createInterview/${username}`, {
+      const response = await fetch(`${servAddr}/createInterview/${username}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -86,6 +86,19 @@ const Dashboard: React.FC = () => {
           description: `Interview ID: ${data.interview_id}`,
         });
       } else {
+        if (response.status == 401){
+          const errorData = await response.json()
+          if (errorData.detail === "Token has expired") {
+            setIsLoggedIn(false)
+            localStorage.removeItem("username");
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
+            setUsername("")
+            navigate("/login")
+            return;
+          }
+        }
+
         const errorData = await response.json();
         toast.error("Failed to create interview", {
           description: errorData.detail || "An error occurred.",
